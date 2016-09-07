@@ -1,0 +1,30 @@
+{
+  "name": "success-front",
+  "description": "teams project",
+  "keywords": [
+    "bitrix",
+    "teams"
+  ],
+  "homepage": "http://nota.media",
+  "type": "project",
+  "license": "Commerce",
+  "config": {
+  "process-timeout": 1000,
+  "secure-http": false
+},
+  "minimum-stability": "stable",
+  "require": {
+    "php": ">=5.4.0",
+    "notamedia/console-jedi": "dev-master",
+    "bitrix-expert/bbc": "1.0.*",
+    "digitalwand/digitalwand.admin_helper": "2.x",
+    "composer/installers": "v1.0.24",
+    "robmorgan/phinx": "0.5.0"
+  },
+  "repositories": [
+
+  ],
+  "extra": {
+    "bitrix-dir": "www/bitrix"
+  }
+}

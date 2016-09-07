@@ -1,0 +1,34 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+#
+Vagrant.configure(2) do |config|
+
+    # Server 50 - Yii2 web server
+    config.vm.define "BEX" do |web|
+      web.vm.box = "centos65"
+      web.vm.box_url = "https://github.com/2creatives/vagrant-centos/releases/download/v6.5.3/centos65-x86_64-20140116.box"
+      web.vm.hostname = "default-web"
+
+      # web
+      web.vm.network :forwarded_port, guest: 80, host: 8888, auto_correct: true
+      web.vm.network :forwarded_port, guest: 3306, host: 8889, auto_correct: true
+      web.vm.network :forwarded_port, guest: 5432, host: 5433, auto_correct: true
+
+      # Синхронизируем папку
+      web.vm.synced_folder "../", "/home/bitrix/"
+      #,  owner: "bitrix", group: "bitrix"
+
+      # Установщик
+      web.vm.provision :shell, path: "install.bash"
+
+      # Кастомный установщик проекта
+      web.vm.provision :shell, path: "../vagrant.custom/init.bash"
+    end
+
+
+  config.vm.provider "virtualbox" do |v|
+    v.gui = true
+    v.memory = 1024
+  end
+
+end
