@@ -6,40 +6,31 @@
 mysql -uroot < /home/bitrix/vagrant.custom/mysql.sql
 
 # Установка Битрикс
+# Попытка сделать то, что делает скрипт http://www.1c-bitrix.ru/download/scripts/bitrixsetup.php
 
-Если /bitrix/ есть, то разворачиваем из дампа {
-    ## Разворачивание дампа
-    mysql -uwww -pwww www < /home/bitrix/vagrant.custom/dump/dump-init.sql
-    mysql -uwww -pwww www < /home/bitrix/vagrant.custom/dump/dump.sql
-}иначе{
-    # Попытка сделать то, что делает скрипт http://www.1c-bitrix.ru/download/scripts/bitrixsetup.php
-
-
-
-    http://www.1c-bitrix.ru/private/download/
-                    "business"=>"Бизнес",
-                    "expert"=>"Эксперт",
-                    "small_business"=>"Малый бизнес",
-                    "standard"=>"Стандарт",
-                    "start"=>"Старт",
-    _encode_php5.tar.gz
+# @todo: нужно сделать какой-то выбор типа редакции
+http://www.1c-bitrix.ru/private/download/
+                "business"=>"Бизнес",
+                "expert"=>"Эксперт",
+                "small_business"=>"Малый бизнес",
+                "standard"=>"Стандарт",
+                "start"=>"Старт",
+_encode_php5.tar.gz
 
 
+cd /home/bitrix
+wget http://www.1c-bitrix.ru/download/start_encode_php5.tar.gz
+mkdir tmp_b
+tar -xf start_encode_php5.tar.gz -C tmp_b
+mv tmp_b/bitrix www/bitrix
+mv tmp_b/upload www/upload
+php /home/bitrix/vagrant.custom/install.php
 
-    wget http://www.1c-bitrix.ru/download/start_encode_php5.tar.gz
-    mkdir tmp_b
-    tar -xf start_encode_php5.tar.gz -C tmp_b
-    mv tmp_b/bitrix www/bitrix
-    mv tmp_b/upload www/upload
-    mv tmp_b/index.php www/index.php ### ОТЧАЯННО ХОЧЕТСЯ ЭТУ ГАДОСТЬ ОБОЙТИ, ИБО ТАМ УСТАНОВКА ИДЁТ ЧЕРЕЗ ВИЗАРД, А НЕ ЧЕРЕЗ КОНСОЛЬ
-    rm tmp_b -rf
-    rm start_encode_php5.tar.gz -rf
+mv tmp_b/index.php www/index.php ### ОТЧАЯННО ХОЧЕТСЯ ЭТУ ГАДОСТЬ ОБОЙТИ, ИБО ТАМ УСТАНОВКА ИДЁТ ЧЕРЕЗ ВИЗАРД, А НЕ ЧЕРЕЗ КОНСОЛЬ
+rm tmp_b -rf
+rm start_encode_php5.tar.gz -rf
 
 
-    echo "<? \$LICENSE_KEY = \"DEMO\"; ?>" > www/bitrix/license_key.php
-
-
-}
 ## Обновление композера
 cd /home/bitrix
 composer install

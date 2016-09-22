@@ -20,16 +20,16 @@ composer.phar
 # This customization
 /vagrant.custom/*
 !vagrant.custom/README.md
+!vagrant.custom/install.php
 !vagrant.custom/license.php.example
+!vagrant.custom/init.bash
+!vagrant.custom/mysql.sql
 /vagrant.custom/ssh/*
 
 # Project
 /wiki
 /www/yandex*
 /www/*.html
-!vagrant.custom/init.bash
-!vagrant.custom/mysql.sql
-!vagrant.custom/dump
 /www/bitrix/
 /www/upload/
 /vendor/
