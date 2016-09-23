@@ -9,13 +9,13 @@ mysql -uroot < /home/bitrix/vagrant.custom/mysql.sql
 # Попытка сделать то, что делает скрипт http://www.1c-bitrix.ru/download/scripts/bitrixsetup.php
 
 # @todo: нужно сделать какой-то выбор типа редакции
-http://www.1c-bitrix.ru/private/download/
-                "business"=>"Бизнес",
-                "expert"=>"Эксперт",
-                "small_business"=>"Малый бизнес",
-                "standard"=>"Стандарт",
-                "start"=>"Старт",
-_encode_php5.tar.gz
+#http://www.1c-bitrix.ru/private/download/
+#                "business"=>"Бизнес",
+#                "expert"=>"Эксперт",
+#                "small_business"=>"Малый бизнес",
+#                "standard"=>"Стандарт",
+#                "start"=>"Старт",
+#_encode_php5.tar.gz
 
 
 cd /home/bitrix

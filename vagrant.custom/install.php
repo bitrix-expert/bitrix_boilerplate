@@ -4,7 +4,7 @@ use Bitrix\Main\Application;
 
 define('CONSOLE_ENCODING', 'cp866');
 
-$_SERVER["DOCUMENT_ROOT"] = __DIR__;
+$_SERVER["DOCUMENT_ROOT"] = __DIR__.'/../www/';
 $_SERVER['PHP_SELF'] = '/index.php';
 
 define('install_edition', 'start');
@@ -33,14 +33,14 @@ $wizard->SetReturnOutput();
 $vars = array(
     // Настойки базы данных для мастера установки
     'dbType' => 'mysql',
-    'user' => 'root',
-    'password' => '',
+    'user' => 'www',
+    'password' => 'www',
     'host' => 'localhost', // port is optional
     'database' => 'www',
-    'create_database' => 'Y',
+    'create_database' => 'N',
     'create_user' => 'N',
     'create_database_type' => '', // empty or innodb
-    'root_user' => '', // if create_database == 'Y'
+    'root_user' => 'root', // if create_database == 'Y'
     'root_password' => '', // if create_database == 'Y'
     'file_access_perms' => '0644',
     'folder_access_perms' => '0755',
