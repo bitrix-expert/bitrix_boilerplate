@@ -64,7 +64,7 @@ foreach ($steps as $stepName => $step)
 {
     echo 'Running installer step ' . $stepName . "...\n";
     $step->OnPostForm();
-    $exceptionHandlerOutput->checkWizardErrors($step);
+    InstallWizardException::check($step);
 }
 
 ob_get_flush();
