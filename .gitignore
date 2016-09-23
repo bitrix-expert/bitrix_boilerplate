@@ -21,6 +21,7 @@ composer.phar
 /vagrant.custom/*
 !vagrant.custom/README.md
 !vagrant.custom/install.php
+!vagrant.custom/install.inc.php
 !vagrant.custom/license.php.example
 !vagrant.custom/init.bash
 !vagrant.custom/mysql.sql
