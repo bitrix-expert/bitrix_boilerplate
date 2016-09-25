@@ -34,3 +34,16 @@ class ExceptionHandlerOutput implements IExceptionHandlerOutput
         echo ExceptionHandlerFormatter::format($exception, false);
     }
 }
+
+class CreateModulesStepExt extends CreateModulesStep
+{
+    function SendResponse($response)
+    {
+        echo "------------------------\n";
+        echo $response,"\n";
+        echo "------------------------\n";
+        $this->InstallModule('main', 'utf8');
+        $this->InstallModule('main', 'files');
+        $this->InstallModule('main', 'database');
+    }
+}

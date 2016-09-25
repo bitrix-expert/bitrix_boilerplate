@@ -25,11 +25,9 @@ tar -xf start_encode_php5.tar.gz -C tmp_b
 mv tmp_b/bitrix www/bitrix
 mv tmp_b/upload www/upload
 php /home/bitrix/vagrant.custom/install.php
-
-mv tmp_b/index.php www/index.php ### ОТЧАЯННО ХОЧЕТСЯ ЭТУ ГАДОСТЬ ОБОЙТИ, ИБО ТАМ УСТАНОВКА ИДЁТ ЧЕРЕЗ ВИЗАРД, А НЕ ЧЕРЕЗ КОНСОЛЬ
 rm tmp_b -rf
 rm start_encode_php5.tar.gz -rf
-
+exit 1; # @todo: когда победим установку битрикса - добить остальное!
 
 ## Обновление композера
 cd /home/bitrix

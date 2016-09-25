@@ -3,7 +3,9 @@
 use Bitrix\Main\Application;
 
 define('CONSOLE_ENCODING', 'cp866');
-
+define('DEBUG_MODE','Y');
+define("LANGUAGE_ID", 'ru');
+define("INSTALL_CHARSET", 'utf8');
 $_SERVER["DOCUMENT_ROOT"] = __DIR__.'/../www/';
 $_SERVER['PHP_SELF'] = '/index.php';
 
@@ -24,7 +26,7 @@ $exceptionHandlerOutput = new ExceptionHandlerOutput();
 Application::getInstance()->getExceptionHandler()->setHandlerOutput($exceptionHandlerOutput);
 
 $wizard = new CWizardBase(str_replace("#VERS#", SM_VERSION, InstallGetMessage("INS_TITLE")), $package = null);
-$arSteps = Array("CreateDBStep", "CreateModulesStep", "CreateAdminStep");
+$arSteps = Array("CreateDBStep", "CreateModulesStepExt", "CreateAdminStep");
 $wizard->AddSteps($arSteps); //Add steps
 $wizard->SetTemplate(new WizardTemplate);
 $wizard->SetReturnOutput();
