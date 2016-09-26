@@ -47,8 +47,12 @@ $vars = array(
     'file_access_perms' => '0644',
     'folder_access_perms' => '0755',
     'utf8' => 'Y',
-
-    // @todo Заполнить переменные остальных шагов
+    'email' => 'team@bitrix.expert',
+    'login' => 'admin',
+    'admin_password' => 'adminadmin',
+    'admin_password_confirm' => 'adminadmin',
+    'user_name' => 'Админ',
+    'user_surname' => 'Админов'
 );
 
 foreach ($vars as $name => $value)
@@ -67,6 +71,7 @@ foreach ($steps as $stepName => $step)
     echo 'Running installer step ' . $stepName . "...\n";
     $step->OnPostForm();
     InstallWizardException::check($step);
+    echo "Step over\n";
 }
-
+echo "Install script over\n";
 ob_get_flush();
