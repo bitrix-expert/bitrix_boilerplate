@@ -1,19 +1,13 @@
 <?php
-// Из-за особенностей работы скриптов Битрикса - приходится выполнять этот скрипт шаг за шагом
-$allSteps = ["CreateDBStep", "CreateModulesStepExt", "CreateAdminStep"];
-$step = $argv[1];
-if ((!$step) or (!preg_match('/^[0-9]$/',$step))) {
-    echo "Sorry, this install script works only step-by-step $step. You need to use integer argument with step number";
-    exit(200);
-}
-if (($step < 1) or ($step > count($allSteps))) {
-    echo "steps over";
-    exit(200);
-}
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 // includes and defines
 use Bitrix\Main\Application;
-define('CONSOLE_ENCODING', 'utf8');
+ini_set('output_buffering', false);
+// @todo посмотреть какие из этих констант действительно важны
+// @todo разделить на настройки нашего установщика и константы битрикса
+define('CONSOLE_ENCODING', 'utf8');  // @todo кодировка консоли разная в разных средах. её нужно как-то определять и перекодировать сообщения битрикса в эту кодировку (из INSTALL_CHARSET?)
 define('DEBUG_MODE','Y');
 define("LANGUAGE_ID", 'ru');
 define("PRE_LANGUAGE_ID", 'ru');
@@ -26,7 +20,7 @@ $_SERVER['PHP_SELF'] = '/index.php';
 
 // Скрипт инсталляции
 ob_start();
-$success = include_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/install/wizard/wizard.php");
+$success = include $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/install/wizard/wizard.php";
 if (!$success)
     die('Folder /bitrix/ is inaccessible for writing and/or reading');
 ob_end_clean();
@@ -36,10 +30,10 @@ unset($wizard);
 require __DIR__ . '/install.inc.php';
 
 // Главная логика. Установка шаг за шагом.
-$arSteps = [$allSteps[$step-1]];
 $exceptionHandlerOutput = new ExceptionHandlerOutput();
 Application::getInstance()->getExceptionHandler()->setHandlerOutput($exceptionHandlerOutput);
 $wizard = new CWizardBase(str_replace("#VERS#", SM_VERSION, InstallGetMessage("INS_TITLE")), $package = null);
+$arSteps = Array("CreateDBStep", "CreateModulesStepExt", "CreateAdminStep");
 $wizard->AddSteps($arSteps); //Add steps
 $wizard->SetTemplate(new WizardTemplate);
 $wizard->SetReturnOutput();
@@ -72,21 +66,53 @@ foreach ($vars as $name => $value)
     $wizard->SetVar($name, $value);
 }
 
-ob_start(function ($content) {
+$arg = json_decode(base64_decode(end($GLOBALS['argv'])), true);
+$ajaxEmulation = is_array($arg);
+
+// special case for CreateModules step ajax emulation
+if ($ajaxEmulation)
+{
+    if ($arg['nextStep'] == '__finish')
+    {
+        die('Done installing modules!' . PHP_EOL);
+    }
+    $wizard->SetVar('nextStep', $arg['nextStep']);
+    $wizard->SetVar('nextStepStage', $arg['nextStepStage']);
+    $wizard->SetCurrentStep('create_modules');
+}
+else
+{
+    $wizard->SetCurrentStep($wizard->firstStepID);
+}
+
+ob_start(function ($content)
+{
     return mb_convert_encoding($content, CONSOLE_ENCODING, INSTALL_CHARSET);
 });
 
 // Погнали устанавливать!
 /** @var CWizardStep[] $steps */
 $steps = $wizard->GetWizardSteps();
-foreach ($steps as $stepName => $step)
+while ($step = $wizard->GetCurrentStep())
 {
-    echo 'Running installer step ' . $stepName . "...\n";
+    // Важный костыль
+    if ($step->GetStepID() == 'create_modules' && !$ajaxEmulation)
+    {
+        $wizard->SetVar("nextStep", "main");
+        $wizard->SetVar("nextStepStage", "database");
+    }
+    if (!$ajaxEmulation)
+    {
+        printf('[%s] %s...' . PHP_EOL, $step->GetStepID(), $step->GetTitle());
+    }
     $step->OnPostForm();
     InstallWizardException::check($step);
-    echo "Step over\n";
+    $wizard->SetCurrentStep($step->GetNextStepID());
+    echo "Step over. Next step: {$step->GetNextStepID()}\n";
 }
-echo "Install script over\n";
-ob_get_flush();
 
-exit(0);
+if (!$ajaxEmulation)
+{
+    echo "Install script over\n";
+}
+ob_get_flush();

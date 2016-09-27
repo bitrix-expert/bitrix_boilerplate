@@ -29,7 +29,7 @@ class InstallWizardException extends RuntimeException
 
 class ExceptionHandlerOutput implements IExceptionHandlerOutput
 {
-    public function renderExceptionMessage($exception, $debug = false)
+    public static function renderExceptionMessage($exception, $debug = false)
     {
         echo ExceptionHandlerFormatter::format($exception, false);
     }
@@ -39,28 +39,35 @@ class CreateModulesStepExt extends CreateModulesStep
 {
     function SendResponse($response)
     {
-        echo "------------------------\n";
-        echo $response,"\n";
-        echo "------------------------\n";
-        $this->InstallModule('main', 'utf8');
-        $this->InstallModule('main', 'files');
-        $this->InstallModule('main', 'database');
-        $this->InstallModule('bitrixcloud', 'utf8');
-        $this->InstallModule('clouds', 'utf8');
-        $this->InstallModule('compression', 'utf8');
-        $this->InstallModule('fileman', 'utf8');
-        $this->InstallModule('fileman', 'files');
-        $this->InstallModule('fileman', 'database');
-        $this->InstallModule('highloadblock', 'utf8');
-        $this->InstallModule('highloadblock', 'files');
-        $this->InstallModule('highloadblock', 'database');
-        $this->InstallModule('iblock', 'utf8');
-        $this->InstallModule('iblock', 'files');
-        $this->InstallModule('iblock', 'database');
-        $this->InstallModule('perfmon', 'utf8');
-        $this->InstallModule('search', 'utf8');
-        $this->InstallModule('seo', 'utf8');
-        $this->InstallModule('socialservices', 'utf8');
-        $this->InstallModule('translate', 'utf8');
+        if (preg_match("/SetStatus\\('(?<progress>[^']+)'.*?Post\\('(?<nextStep>[^']+)',\\s*'(?<nextStepStage>[^']+)',\\s*'(?<status>[^']+)'/", $response, $matches))
+        {
+            printf('[%d%%] %s' . PHP_EOL, $matches['progress'], html_entity_decode($matches['status']));
+            $this->restartScript(array(
+                'nextStep' => $matches['nextStep'],
+                'nextStepStage' => $matches['nextStepStage'],
+            ));
+        }
+        else
+        {
+            throw new InstallWizardException('Unexpected response: ' . var_export($response, 1));
+        }
+        die();
+    }
+
+    /**
+     * Executes another copy of console process to continue
+     *
+     * @param array $vars
+     * @return int
+     */
+    protected function restartScript(array $vars)
+    {
+        ob_end_flush();
+        $proc = popen('php -f ' . implode(' ', $GLOBALS['argv']) . ' ' . escapeshellarg(base64_encode(json_encode($vars))) . ' 2>&1', 'r');
+        while (!feof($proc)) {
+            echo fread($proc, 4096);
+        }
+
+        return pclose($proc);
     }
 }
