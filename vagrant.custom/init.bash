@@ -18,15 +18,27 @@ mysql -uroot < /home/bitrix/vagrant.custom/mysql.sql
 #_encode_php5.tar.gz
 
 
+## Скачиваем и распаковываем Битрикс
 cd /home/bitrix
 wget http://www.1c-bitrix.ru/download/start_encode_php5.tar.gz
 mkdir tmp_b
 tar -xf start_encode_php5.tar.gz -C tmp_b
 mv tmp_b/bitrix www/bitrix
 mv tmp_b/upload www/upload
-php /home/bitrix/vagrant.custom/install.php
 rm tmp_b -rf
 rm start_encode_php5.tar.gz -rf
+
+## Запускаем установку Битрикса. К сожалению - приходится извращаться и запускать по шагам.
+resl=1
+x=1
+while [ $resl != 200 ]
+do
+  php /home/bitrix/vagrant.custom/install.php $x
+  resl=`echo $?`
+  x=$(( $x + 1 ))
+done
+
+echo "OLALA!"
 exit 1; # @todo: когда победим установку битрикса - добить остальное!
 
 ## Обновление композера
