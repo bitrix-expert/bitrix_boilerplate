@@ -1,6 +1,6 @@
 <?php
 // Из-за особенностей работы скриптов Битрикса - приходится выполнять этот скрипт шаг за шагом
-$allSteps = ["CreateDBStep", "CreateModulesStepExt", "CreateAdminStep"];
+$allSteps = ["CreateDBStep", "CheckLicenseKeyExt", "CreateModulesStepExt", "CreateAdminStep"];
 $step = $argv[1];
 if ((!$step) or (!preg_match('/^[0-9]$/',$step))) {
     echo "Sorry, this install script works only step-by-step $step. You need to use integer argument with step number";
@@ -15,6 +15,8 @@ if (($step < 1) or ($step > count($allSteps))) {
 use Bitrix\Main\Application;
 define('CONSOLE_ENCODING', 'utf8');
 define('DEBUG_MODE','Y');
+define('DEMO','Y');
+define('TRIAL_VERSION','Y');
 define("LANGUAGE_ID", 'ru');
 define("PRE_LANGUAGE_ID", 'ru');
 define("INSTALL_CHARSET", 'utf8');
@@ -60,12 +62,13 @@ $vars = array(
     'file_access_perms' => '0644',
     'folder_access_perms' => '0755',
     'utf8' => 'Y',
-    'email' => 'team@bitrix.expert',
+    'email' => 'boilerplate@bitrix.expert',
     'login' => 'admin',
     'admin_password' => 'adminadmin',
     'admin_password_confirm' => 'adminadmin',
     'user_name' => 'Админ',
-    'user_surname' => 'Админов'
+    'user_surname' => 'Админов',
+    'lic_key_variant' => 'Y'
 );
 foreach ($vars as $name => $value)
 {
