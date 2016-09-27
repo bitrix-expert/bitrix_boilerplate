@@ -29,6 +29,7 @@ rm tmp_b -rf
 rm start_encode_php5.tar.gz -rf
 
 ## Запускаем установку Битрикса. К сожалению - приходится извращаться и запускать по шагам.
+cd /home/bitrix/vagrant.custom/
 resl=1
 x=1
 while [ $resl != 200 ]

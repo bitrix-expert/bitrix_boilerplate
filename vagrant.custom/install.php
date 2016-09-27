@@ -13,10 +13,12 @@ if (($step < 1) or ($step > count($allSteps))) {
 
 // includes and defines
 use Bitrix\Main\Application;
-define('CONSOLE_ENCODING', 'cp866');
+define('CONSOLE_ENCODING', 'utf8');
 define('DEBUG_MODE','Y');
 define("LANGUAGE_ID", 'ru');
+define("PRE_LANGUAGE_ID", 'ru');
 define("INSTALL_CHARSET", 'utf8');
+define("PRE_INSTALL_CHARSET", 'cp1251');
 define('install_edition', 'start');
 define("B_PROLOG_INCLUDED", true);
 $_SERVER["DOCUMENT_ROOT"] = __DIR__.'/../www/';
