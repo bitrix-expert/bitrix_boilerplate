@@ -1,7 +1,5 @@
 <?php
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
-
 // includes and defines
 use Bitrix\Main\Application;
 ini_set('output_buffering', false);
@@ -9,21 +7,30 @@ ini_set('output_buffering', false);
 // @todo разделить на настройки нашего установщика и константы битрикса
 define('CONSOLE_ENCODING', 'utf8');  // @todo кодировка консоли разная в разных средах. её нужно как-то определять и перекодировать сообщения битрикса в эту кодировку (из INSTALL_CHARSET?)
 define('DEBUG_MODE','Y');
-define("LANGUAGE_ID", 'ru');
+//define("LANGUAGE_ID", 'ru');
 define("PRE_LANGUAGE_ID", 'ru');
-define("INSTALL_CHARSET", 'utf8');
+//define("INSTALL_CHARSET", 'utf8');
 define("PRE_INSTALL_CHARSET", 'cp1251');
 define('install_edition', 'start');
 define("B_PROLOG_INCLUDED", true);
 $_SERVER["DOCUMENT_ROOT"] = __DIR__.'/../www/';
 $_SERVER['PHP_SELF'] = '/index.php';
 
+if (!ini_get("short_open_tag"))
+{
+    echo 'short_open_tag value must be turned on in you php.ini' . PHP_EOL;
+    die(1);
+}
+
 // Скрипт инсталляции
 ob_start();
 $success = include $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/install/wizard/wizard.php";
-if (!$success)
-    die('Folder /bitrix/ is inaccessible for writing and/or reading');
 ob_end_clean();
+if (!$success)
+{
+    echo 'Can\'t find /bitrix/ folder or it is inaccessible for writing and/or reading' . PHP_EOL;
+    die(1);
+}
 unset($wizard);
 
 // Кастомные классы.
