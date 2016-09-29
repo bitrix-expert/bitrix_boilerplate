@@ -29,7 +29,7 @@ class InstallWizardException extends RuntimeException
 
 class ExceptionHandlerOutput implements IExceptionHandlerOutput
 {
-    public static function renderExceptionMessage($exception, $debug = false)
+    public function renderExceptionMessage($exception, $debug = false)
     {
         echo ExceptionHandlerFormatter::format($exception, false);
     }
