@@ -40,7 +40,7 @@ require __DIR__ . '/install.inc.php';
 $exceptionHandlerOutput = new ExceptionHandlerOutput();
 Application::getInstance()->getExceptionHandler()->setHandlerOutput($exceptionHandlerOutput);
 $wizard = new CWizardBase(str_replace("#VERS#", SM_VERSION, InstallGetMessage("INS_TITLE")), $package = null);
-$arSteps = Array("CreateDBStep", "CreateModulesStepExt", "CreateAdminStep");
+$arSteps = Array("CreateDBStep", "CheckLicenseKeyExt", "CreateModulesStepExt", "CreateAdminStep");
 $wizard->AddSteps($arSteps); //Add steps
 $wizard->SetTemplate(new WizardTemplate);
 $wizard->SetReturnOutput();
