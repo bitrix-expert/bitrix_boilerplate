@@ -51,7 +51,7 @@ class CreateModulesStepExt extends CreateModulesStep
         {
             throw new InstallWizardException('Unexpected response: ' . var_export($response, 1));
         }
-        die();
+        die(1);
     }
 
     /**
