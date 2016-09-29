@@ -41,7 +41,7 @@ class CreateModulesStepExt extends CreateModulesStep
     {
         if (preg_match("/Post\\('(?<nextStep>[^']+)',\\s*'(?<nextStepStage>[^']*)',\\s*'(?<status>[^']+)'/", $response, $matches))
         {
-            $response = array(
+            $result = array(
                 'progress' => 100,
                 'status' => mb_convert_encoding(html_entity_decode($matches['status']), CONSOLE_ENCODING, INSTALL_CHARSET),
                 'step' => $matches['nextStep'],
@@ -50,9 +50,9 @@ class CreateModulesStepExt extends CreateModulesStep
             if ($matches['nextStep'] != '__finish')
             {
                 if (preg_match('/SetStatus\\(\'(?<progress>[^\']+)\'/', $response, $m))
-                $matches['progress'] = $m['progress'];
+                    $result['progress'] = $m['progress'];
             }
-            echo base64_encode(serialize($response));
+            echo base64_encode(serialize($result));
         }
         else
         {
