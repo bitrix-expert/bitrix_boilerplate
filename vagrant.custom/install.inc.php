@@ -39,36 +39,66 @@ class CreateModulesStepExt extends CreateModulesStep
 {
     function SendResponse($response)
     {
-        if (preg_match("/SetStatus\\('(?<progress>[^']+)'.*?Post\\('(?<nextStep>[^']+)',\\s*'(?<nextStepStage>[^']+)',\\s*'(?<status>[^']+)'/", $response, $matches))
+        if (preg_match("/Post\\('(?<nextStep>[^']+)',\\s*'(?<nextStepStage>[^']*)',\\s*'(?<status>[^']+)'/", $response, $matches))
         {
-            printf('[%d%%] %s' . PHP_EOL, $matches['progress'], html_entity_decode($matches['status']));
-            $this->restartScript(array(
-                'nextStep' => $matches['nextStep'],
-                'nextStepStage' => $matches['nextStepStage'],
-            ));
+            $response = array(
+                'progress' => 100,
+                'status' => mb_convert_encoding(html_entity_decode($matches['status']), CONSOLE_ENCODING, INSTALL_CHARSET),
+                'step' => $matches['nextStep'],
+                'stepStage' => $matches['nextStepStage'],
+            );
+            if ($matches['nextStep'] != '__finish')
+            {
+                if (preg_match('/SetStatus\\(\'(?<progress>[^\']+)\'/', $response, $m))
+                $matches['progress'] = $m['progress'];
+            }
+            echo base64_encode(serialize($response));
         }
         else
         {
             throw new InstallWizardException('Unexpected response: ' . var_export($response, 1));
         }
-        die(1);
+        die(0);
+    }
+
+    public function processInstallation()
+    {
+        $current = array(
+            "step" => "main",
+            "stepStage" => "database",
+        );
+        do
+        {
+            $response = $this->emulateAjax($current);
+            printf('[%d%%] %s' . PHP_EOL, $response['progress'], html_entity_decode($response['status']));
+            $current = $response;
+        } while ($current['step'] !== '__finish');
     }
 
     /**
      * Executes another copy of console process to continue
      *
      * @param array $vars
-     * @return int
+     * @return array
      */
-    protected function restartScript(array $vars)
+    protected function emulateAjax(array $vars)
     {
         ob_end_flush();
-        $proc = popen('php -f ' . implode(' ', $GLOBALS['argv']) . ' ' . escapeshellarg(base64_encode(json_encode($vars))) . ' 2>&1', 'r');
+        $proc = popen('php -f ' . implode(' ', $GLOBALS['argv']) . ' ' . escapeshellarg(base64_encode(serialize($vars))) . ' 2>&1', 'r');
+        $output = '';
         while (!feof($proc)) {
-            echo fread($proc, 4096);
+            $output .= fread($proc, 4096);
         }
-
-        return pclose($proc);
+        if (pclose($proc) !== 0)
+        {
+            throw new InstallWizardException('Child process failed');
+        }
+        $result = unserialize(base64_decode($output));
+        if (!is_array($result))
+        {
+            throw new InstallWizardException('Unexpected response: ' . var_export($output, 1));
+        }
+        return $result;
     }
 }
 

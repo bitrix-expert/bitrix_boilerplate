@@ -77,19 +77,19 @@ foreach ($vars as $name => $value)
     $wizard->SetVar($name, $value);
 }
 
-$arg = json_decode(base64_decode(end($GLOBALS['argv'])), true);
+$arg = unserialize(base64_decode(end($GLOBALS['argv'])));
 $ajaxEmulation = is_array($arg);
 
 // special case for CreateModules step ajax emulation
 if ($ajaxEmulation)
 {
-    if ($arg['nextStep'] == '__finish')
-    {
-        die('Done installing modules!' . PHP_EOL);
-    }
-    $wizard->SetVar('nextStep', $arg['nextStep']);
-    $wizard->SetVar('nextStepStage', $arg['nextStepStage']);
+    $wizard->SetVar('nextStep', $arg['step']);
+    $wizard->SetVar('nextStepStage', $arg['stepStage']);
     $wizard->SetCurrentStep('create_modules');
+    /** @var CWizardStep $currentStep */
+    $currentStep = $wizard->GetCurrentStep();
+    $currentStep->OnPostForm();
+    die(0);
 }
 else
 {
@@ -106,24 +106,32 @@ ob_start(function ($content)
 $steps = $wizard->GetWizardSteps();
 while ($step = $wizard->GetCurrentStep())
 {
-    // Важный костыль
-    if ($step->GetStepID() == 'create_modules' && !$ajaxEmulation)
+    printf('[%s] %s...' . PHP_EOL, $step->GetStepID(), $step->GetTitle());
+    if ($step instanceof CreateDBStep && defined('TRIAL_VERSION'))
     {
-        $wizard->SetVar("nextStep", "main");
-        $wizard->SetVar("nextStepStage", "database");
+        $step->nextStepID = 'check_license_key';
     }
-    if (!$ajaxEmulation)
+    elseif ($step instanceof CreateModulesStepExt)
     {
-        printf('[%s] %s...' . PHP_EOL, $step->GetStepID(), $step->GetTitle());
+        $step->processInstallation();
+        $step->nextStepID = 'create_admin';
     }
-    $step->OnPostForm();
+    else
+    {
+        $step->OnPostForm();
+    }
     InstallWizardException::check($step);
-    $wizard->SetCurrentStep($step->GetNextStepID());
-    echo "Step over. Next step: {$step->GetNextStepID()}\n";
+
+    $nextStepId = $step->GetNextStepID();
+    if ($nextStepId)
+    {
+        $wizard->SetCurrentStep($step->GetNextStepID());
+        echo "Step over. Next step: {$step->GetNextStepID()}\n";
+    }
+    else
+    {
+        break;
+    }
 }
 
-if (!$ajaxEmulation)
-{
-    echo "Install script over\n";
-}
-ob_get_flush();
+echo "Install script over\n";
