@@ -39,29 +39,66 @@ class CreateModulesStepExt extends CreateModulesStep
 {
     function SendResponse($response)
     {
-        echo "------------------------\n";
-        echo $response,"\n";
-        echo "------------------------\n";
-        $this->InstallModule('main', 'utf8');
-        $this->InstallModule('main', 'files');
-        $this->InstallModule('main', 'database');
-        $this->InstallModule('bitrixcloud', 'utf8');
-        $this->InstallModule('clouds', 'utf8');
-        $this->InstallModule('compression', 'utf8');
-        $this->InstallModule('fileman', 'utf8');
-        $this->InstallModule('fileman', 'files');
-        $this->InstallModule('fileman', 'database');
-        $this->InstallModule('highloadblock', 'utf8');
-        $this->InstallModule('highloadblock', 'files');
-        $this->InstallModule('highloadblock', 'database');
-        $this->InstallModule('iblock', 'utf8');
-        $this->InstallModule('iblock', 'files');
-        $this->InstallModule('iblock', 'database');
-        $this->InstallModule('perfmon', 'utf8');
-        $this->InstallModule('search', 'utf8');
-        $this->InstallModule('seo', 'utf8');
-        $this->InstallModule('socialservices', 'utf8');
-        $this->InstallModule('translate', 'utf8');
+        if (preg_match("/Post\\('(?<nextStep>[^']+)',\\s*'(?<nextStepStage>[^']*)',\\s*'(?<status>[^']+)'/", $response, $matches))
+        {
+            $result = array(
+                'progress' => 100,
+                'status' => mb_convert_encoding(html_entity_decode($matches['status']), CONSOLE_ENCODING, INSTALL_CHARSET),
+                'step' => $matches['nextStep'],
+                'stepStage' => $matches['nextStepStage'],
+            );
+            if ($matches['nextStep'] != '__finish')
+            {
+                if (preg_match('/SetStatus\\(\'(?<progress>[^\']+)\'/', $response, $m))
+                    $result['progress'] = $m['progress'];
+            }
+            echo base64_encode(serialize($result));
+        }
+        else
+        {
+            throw new InstallWizardException('Unexpected response: ' . var_export($response, 1));
+        }
+        die(0);
+    }
+
+    public function processInstallation()
+    {
+        $current = array(
+            "step" => "main",
+            "stepStage" => "database",
+        );
+        do
+        {
+            $response = $this->emulateAjax($current);
+            printf('[%d%%] %s' . PHP_EOL, $response['progress'], html_entity_decode($response['status']));
+            $current = $response;
+        } while ($current['step'] !== '__finish');
+    }
+
+    /**
+     * Executes another copy of console process to continue
+     *
+     * @param array $vars
+     * @return array
+     */
+    protected function emulateAjax(array $vars)
+    {
+        ob_end_flush();
+        $proc = popen('php -f ' . implode(' ', $GLOBALS['argv']) . ' ' . escapeshellarg(base64_encode(serialize($vars))) . ' 2>&1', 'r');
+        $output = '';
+        while (!feof($proc)) {
+            $output .= fread($proc, 4096);
+        }
+        if (pclose($proc) !== 0)
+        {
+            throw new InstallWizardException('Child process failed');
+        }
+        $result = unserialize(base64_decode($output));
+        if (!is_array($result))
+        {
+            throw new InstallWizardException('Unexpected response: ' . var_export($output, 1));
+        }
+        return $result;
     }
 }
 

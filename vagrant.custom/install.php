@@ -1,47 +1,49 @@
 <?php
-// Из-за особенностей работы скриптов Битрикса - приходится выполнять этот скрипт шаг за шагом
-$allSteps = ["CreateDBStep", "CheckLicenseKeyExt", "CreateModulesStepExt", "CreateAdminStep"];
-$step = $argv[1];
-if ((!$step) or (!preg_match('/^[0-9]$/',$step))) {
-    echo "Sorry, this install script works only step-by-step $step. You need to use integer argument with step number";
-    exit(200);
-}
-if (($step < 1) or ($step > count($allSteps))) {
-    echo "steps over";
-    exit(200);
-}
 
 // includes and defines
 use Bitrix\Main\Application;
-define('CONSOLE_ENCODING', 'utf8');
+ini_set('output_buffering', false);
+// @todo посмотреть какие из этих констант действительно важны
+// @todo разделить на настройки нашего установщика и константы битрикса
+define('CONSOLE_ENCODING', 'utf8');  // @todo кодировка консоли разная в разных средах. её нужно как-то определять и перекодировать сообщения битрикса в эту кодировку (из INSTALL_CHARSET?)
 define('DEBUG_MODE','Y');
-define('DEMO','Y');
-define('TRIAL_VERSION','Y');
-define("LANGUAGE_ID", 'ru');
+//define("LANGUAGE_ID", 'ru');
 define("PRE_LANGUAGE_ID", 'ru');
-define("INSTALL_CHARSET", 'utf8');
+//define("INSTALL_CHARSET", 'utf8');
 define("PRE_INSTALL_CHARSET", 'cp1251');
 define('install_edition', 'start');
 define("B_PROLOG_INCLUDED", true);
 $_SERVER["DOCUMENT_ROOT"] = __DIR__.'/../www/';
 $_SERVER['PHP_SELF'] = '/index.php';
 
+if (!ini_get("short_open_tag"))
+{
+    echo 'short_open_tag value must be turned on in you php.ini' . PHP_EOL;
+    die(1);
+}
+
 // Скрипт инсталляции
 ob_start();
-$success = include_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/install/wizard/wizard.php");
-if (!$success)
-    die('Folder /bitrix/ is inaccessible for writing and/or reading');
+$success = include $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/install/wizard/wizard.php";
 ob_end_clean();
+if (!$success)
+{
+    echo 'Can\'t find /bitrix/ folder or it is inaccessible for writing and/or reading' . PHP_EOL;
+    die(1);
+}
 unset($wizard);
+
+error_reporting(E_ALL & ~(E_NOTICE | E_DEPRECATED | E_STRICT));
+ini_set('display_errors', 1);
 
 // Кастомные классы.
 require __DIR__ . '/install.inc.php';
 
 // Главная логика. Установка шаг за шагом.
-$arSteps = [$allSteps[$step-1]];
 $exceptionHandlerOutput = new ExceptionHandlerOutput();
 Application::getInstance()->getExceptionHandler()->setHandlerOutput($exceptionHandlerOutput);
 $wizard = new CWizardBase(str_replace("#VERS#", SM_VERSION, InstallGetMessage("INS_TITLE")), $package = null);
+$arSteps = Array("CreateDBStep", "CheckLicenseKeyExt", "CreateModulesStepExt", "CreateAdminStep");
 $wizard->AddSteps($arSteps); //Add steps
 $wizard->SetTemplate(new WizardTemplate);
 $wizard->SetReturnOutput();
@@ -75,21 +77,61 @@ foreach ($vars as $name => $value)
     $wizard->SetVar($name, $value);
 }
 
-ob_start(function ($content) {
+$arg = unserialize(base64_decode(end($GLOBALS['argv'])));
+$ajaxEmulation = is_array($arg);
+
+// special case for CreateModules step ajax emulation
+if ($ajaxEmulation)
+{
+    $wizard->SetVar('nextStep', $arg['step']);
+    $wizard->SetVar('nextStepStage', $arg['stepStage']);
+    $wizard->SetCurrentStep('create_modules');
+    /** @var CWizardStep $currentStep */
+    $currentStep = $wizard->GetCurrentStep();
+    $currentStep->OnPostForm();
+    die(0);
+}
+else
+{
+    $wizard->SetCurrentStep($wizard->firstStepID);
+}
+
+ob_start(function ($content)
+{
     return mb_convert_encoding($content, CONSOLE_ENCODING, INSTALL_CHARSET);
 });
 
 // Погнали устанавливать!
 /** @var CWizardStep[] $steps */
 $steps = $wizard->GetWizardSteps();
-foreach ($steps as $stepName => $step)
+while ($step = $wizard->GetCurrentStep())
 {
-    echo 'Running installer step ' . $stepName . "...\n";
-    $step->OnPostForm();
+    printf('[%s] %s...' . PHP_EOL, $step->GetStepID(), $step->GetTitle());
+    if ($step instanceof CreateDBStep && defined('TRIAL_VERSION'))
+    {
+        $step->nextStepID = 'check_license_key';
+    }
+    elseif ($step instanceof CreateModulesStepExt)
+    {
+        $step->processInstallation();
+        $step->nextStepID = 'create_admin';
+    }
+    else
+    {
+        $step->OnPostForm();
+    }
     InstallWizardException::check($step);
-    echo "Step over\n";
-}
-echo "Install script over\n";
-ob_get_flush();
 
-exit(0);
+    $nextStepId = $step->GetNextStepID();
+    if ($nextStepId)
+    {
+        $wizard->SetCurrentStep($step->GetNextStepID());
+        echo "Step over. Next step: {$step->GetNextStepID()}\n";
+    }
+    else
+    {
+        break;
+    }
+}
+
+echo "Install script over\n";
