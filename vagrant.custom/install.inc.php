@@ -31,7 +31,7 @@ class ExceptionHandlerOutput implements IExceptionHandlerOutput
 {
     public function renderExceptionMessage($exception, $debug = false)
     {
-        echo ExceptionHandlerFormatter::format($exception, false);
+        echo ExceptionHandlerFormatter::format($exception, false) . "\n";
     }
 }
 
@@ -54,11 +54,15 @@ class CreateModulesStepExt extends CreateModulesStep
             }
             echo base64_encode(serialize($result));
         }
+        elseif (strpos($response, 'ajaxForm.StopAjax()') !== false)
+        {
+            // error occured
+        }
         else
         {
             throw new InstallWizardException('Unexpected response: ' . var_export($response, 1));
         }
-        die(0);
+        die();
     }
 
     public function processInstallation()
@@ -91,12 +95,15 @@ class CreateModulesStepExt extends CreateModulesStep
         }
         if (pclose($proc) !== 0)
         {
-            throw new InstallWizardException('Child process failed');
+            echo str_repeat('-', 80) . PHP_EOL;
+            echo $output;
+            echo str_repeat('-', 80) . PHP_EOL;
+            throw new InstallWizardException(sprintf('create_modules step failed for module `%s` stage `%s`', $vars['step'], $vars['stepStage']));
         }
         $result = unserialize(base64_decode($output));
         if (!is_array($result))
         {
-            throw new InstallWizardException('Unexpected response: ' . var_export($output, 1));
+            throw new InstallWizardException('Unexpected response: ' . strip_tags($output));
         }
         return $result;
     }
@@ -109,6 +116,11 @@ class CheckLicenseKeyExt extends CheckLicenseKey
         $wizard =& $this->GetWizard();
         $licenseKey = $wizard->GetVar("license");
         global $DBType;
+
+        if (preg_match('/[A-Z0-9]{3}-[A-Z]{2}-?[A-Z0-9]{12,18}/i', $licenseKey))
+        {
+            return true;
+        }
 
         $lic_key_variant = $wizard->GetVar("lic_key_variant");
 
@@ -220,10 +232,21 @@ class CheckLicenseKeyExt extends CheckLicenseKey
 
 
         $this->CreateLicenseFile();
+
+        return true;
     }
 
     function ShowStep()
     {
         $this->content = '';
+    }
+}
+
+class FinishStepExt extends FinishStep
+{
+    function OnPostForm()
+    {
+        $this->CreateNewIndex();
+        BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"]."/install.config");
     }
 }

@@ -7,13 +7,13 @@ ini_set('output_buffering', false);
 // @todo разделить на настройки нашего установщика и константы битрикса
 define('CONSOLE_ENCODING', 'utf8');  // @todo кодировка консоли разная в разных средах. её нужно как-то определять и перекодировать сообщения битрикса в эту кодировку (из INSTALL_CHARSET?)
 define('DEBUG_MODE','Y');
-//define("LANGUAGE_ID", 'ru');
-define("PRE_LANGUAGE_ID", 'ru');
-//define("INSTALL_CHARSET", 'utf8');
-define("PRE_INSTALL_CHARSET", 'cp1251');
+//define("LANGUAGE_ID", 'ru'); //@todo заполняется автоматом из /install.config, можно не определять тут
+//define("INSTALL_CHARSET", 'utf8'); //@todo заполняется автоматом из /install.config, можно не определять тут
+//define("PRE_LANGUAGE_ID", 'ru'); //@todo используется как LANGUAGE_ID если файла /install.config нет
+//define("PRE_INSTALL_CHARSET", 'cp1251'); //@todo используется как INSTALL_CHARSET если файла /install.config нет
 define('install_edition', 'start');
 define("B_PROLOG_INCLUDED", true);
-$_SERVER["DOCUMENT_ROOT"] = __DIR__.'/../www/';
+$_SERVER["DOCUMENT_ROOT"] = realpath(__DIR__.'/../www/');
 $_SERVER['PHP_SELF'] = '/index.php';
 
 if (!ini_get("short_open_tag"))
@@ -43,7 +43,7 @@ require __DIR__ . '/install.inc.php';
 $exceptionHandlerOutput = new ExceptionHandlerOutput();
 Application::getInstance()->getExceptionHandler()->setHandlerOutput($exceptionHandlerOutput);
 $wizard = new CWizardBase(str_replace("#VERS#", SM_VERSION, InstallGetMessage("INS_TITLE")), $package = null);
-$arSteps = Array("CreateDBStep", "CheckLicenseKeyExt", "CreateModulesStepExt", "CreateAdminStep");
+$arSteps = Array("CreateDBStep", "CheckLicenseKeyExt", "CreateModulesStepExt", "CreateAdminStep", "FinishStepExt");
 $wizard->AddSteps($arSteps); //Add steps
 $wizard->SetTemplate(new WizardTemplate);
 $wizard->SetReturnOutput();
@@ -74,7 +74,7 @@ $vars = array(
 );
 foreach ($vars as $name => $value)
 {
-    $wizard->SetVar($name, $value);
+    $wizard->SetVar($name, mb_convert_encoding($value, INSTALL_CHARSET, 'utf-8'));
 }
 
 $arg = unserialize(base64_decode(end($GLOBALS['argv'])));
@@ -86,7 +86,7 @@ if ($ajaxEmulation)
     $wizard->SetVar('nextStep', $arg['step']);
     $wizard->SetVar('nextStepStage', $arg['stepStage']);
     $wizard->SetCurrentStep('create_modules');
-    /** @var CWizardStep $currentStep */
+    /** @var CreateModulesStepExt $currentStep */
     $currentStep = $wizard->GetCurrentStep();
     $currentStep->OnPostForm();
     die(0);
@@ -109,6 +109,7 @@ while ($step = $wizard->GetCurrentStep())
     printf('[%s] %s...' . PHP_EOL, $step->GetStepID(), $step->GetTitle());
     if ($step instanceof CreateDBStep && defined('TRIAL_VERSION'))
     {
+        $step->OnPostForm();
         $step->nextStepID = 'check_license_key';
     }
     elseif ($step instanceof CreateModulesStepExt)
