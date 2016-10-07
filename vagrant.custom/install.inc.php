@@ -67,14 +67,17 @@ class CreateModulesStepExt extends CreateModulesStep
 
     public function processInstallation()
     {
+        $isUtf = $this->GetWizard()->GetVar('utf8') == 'Y';
         $current = array(
             "step" => "main",
-            "stepStage" => "database",
+            "stepStage" => $isUtf ? "utf8" : "database",
+            "status" => InstallGetMessage("INST_MAIN_MODULE") . ' (' . ($isUtf ? "UTF-8" : InstallGetMessage("INST_INSTALL_DATABASE")) . ')',
+            "progress" => 0,
         );
         do
         {
+            printf('[%d%%] %s' . PHP_EOL, $current['progress'], html_entity_decode($current['status']));
             $response = $this->emulateAjax($current);
-            printf('[%d%%] %s' . PHP_EOL, $response['progress'], html_entity_decode($response['status']));
             $current = $response;
         } while ($current['step'] !== '__finish');
     }
