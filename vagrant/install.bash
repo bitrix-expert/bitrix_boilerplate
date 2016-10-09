@@ -37,11 +37,7 @@ sudo service httpd restart
 # Прокидываем ssh-ключи
 if [ ! -f /home/bitrix/vagrant.custom/ssh/id_rsa ]
   then
-    tput bold;
-    tput setaf 1;
     echo "SSH key is missing (vagrant.custom/ssh/id_rsa)"
-    tput sgr0;
-    exit 0
   else
     echo "Copy SSH key..."
     mkdir /home/vagrant/.ssh/
@@ -53,5 +49,9 @@ fi
 # @todo
 
 # Composer
+echo "Installing Composer"
+
 curl -sS https://getcomposer.org/installer | php
 sudo mv composer.phar /usr/sbin/composer
+
+echo "Env install finished"
