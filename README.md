@@ -16,8 +16,7 @@
 В папке `/vagrant.custom/` нужно положить несколько файлов, характерных именно для вашего окружения.
 
 ```
-/vagrant.custom/ssh/id_rsa
-/vagrant.custom/license.php
+/vagrant.custom/id_rsa
 ```
 
 Пояснения по поводу этих файлов можно прочитать в `/vagrant.custom/README.md`
