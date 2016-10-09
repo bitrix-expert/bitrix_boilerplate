@@ -1,9 +1,9 @@
-﻿﻿#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 
 # Скрипт, занимающийся установкой площадки
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/"
-HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )/"
+SCRIPT_DIR="/home/bitrix/vagrant.custom/"
+HOME="/home/bitrix/"
 
 ## Установка БД
 mysql -uroot < ${HOME}/vagrant.custom/mysql.sql || exit 1
@@ -36,7 +36,6 @@ rm start_encode_php5.tar.gz -rf
 php -f ${SCRIPT_DIR}install.php || exit 1
 
 echo "OLALA!"
-exit 1; # @todo: когда победим установку битрикса - добить остальное!
 
 ## Обновление композера
 cd ${HOME}
