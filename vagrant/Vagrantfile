@@ -20,6 +20,7 @@ Vagrant.configure(2) do |config|
 
       # Установщик
       web.vm.provision :shell, path: "install.bash"
+      web.vm.provision :shell, path: "init.bash", run: "always"
 
       # Кастомный установщик проекта
       web.vm.provision :shell, path: "../vagrant.custom/init.bash"
